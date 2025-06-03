@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive English Quiz: Analytical Exposition & Narrative Text</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light gray background */
+            color: #1e293b; /* Main text color (slate-800) */
+        }
+        .quiz-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff; /* White card background */
+            border-radius: 12px; /* Larger rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Softer shadow */
+        }
+        .question-text {
+            font-size: 1.25rem; /* Larger question font size */
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #334155; /* Question text color (slate-700) */
+        }
+        .option-button {
+            display: block;
+            width: 100%;
+            padding: 1rem; /* Larger padding */
+            margin-bottom: 0.75rem; /* Spacing between options */
+            text-align: left;
+            background-color: #f8fafc; /* Option background (slate-50) */
+            border: 1px solid #e2e8f0; /* Option border (slate-200) */
+            border-radius: 8px; /* Rounded corners for options */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .option-button:hover {
+            background-color: #e0f2fe; /* Hover background (sky-100) */
+            border-color: #7dd3fc; /* Hover border (sky-300) */
+        }
+        .option-button.selected {
+            background-color: #bae6fd; /* Selected background (sky-200) */
+            border-color: #38bdf8; /* Selected border (sky-500) */
+            font-weight: 600;
+        }
+        .feedback {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem; /* Smaller feedback font size */
+        }
+        .feedback.correct {
+            background-color: #dcfce7; /* Correct background (green-100) */
+            color: #166534; /* Correct text color (green-800) */
+            border: 1px solid #86efac; /* Correct border (green-300) */
+        }
+        .feedback.incorrect {
+            background-color: #fee2e2; /* Incorrect background (red-100) */
+            color: #991b1b; /* Incorrect text color (red-800) */
+            border: 1px solid #fca5a5; /* Incorrect border (red-300) */
+        }
+        .explanation {
+            margin-top: 0.75rem;
+            font-style: italic;
+            color: #475569; /* Explanation text color (slate-600) */
+        }
+        .navigation-button {
+            padding: 0.75rem 1.5rem; /* Navigation button padding */
+            background-color: #0ea5e9; /* Button background color (sky-500) */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 600;
+        }
+        .navigation-button:hover {
+            background-color: #0284c7; /* Button hover color (sky-600) */
+        }
+        .navigation-button:disabled {
+            background-color: #94a3b8; /* Disabled button color (slate-400) */
+            cursor: not-allowed;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb; /* Progress bar background (gray-200) */
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            overflow: hidden; /* To ensure border radius on progress */
+        }
+        .progress-bar {
+            height: 12px; /* Progress bar height */
+            background-color: #3b82f6; /* Progress bar color (blue-500) */
+            width: 0%;
+            border-radius: 8px;
+            transition: width 0.5s ease-in-out;
+        }
+        .score-container {
+            text-align: center;
+        }
+        .score-text {
+            font-size: 1.75rem; /* Larger score font size */
+            font-weight: 700;
+            color: #1d4ed8; /* Score text color (blue-700) */
+            margin-bottom: 1rem;
+        }
+        .restart-button {
+            margin-top: 1.5rem;
+        }
+        /* Mobile responsiveness */
+        @media (max-width: 640px) {
+            .quiz-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            .question-text {
+                font-size: 1.1rem;
+            }
+            .option-button {
+                padding: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1 class="text-3xl font-bold text-center mb-8 text-sky-600">Interactive English Quiz</h1>
+        
+        <div id="quiz-content">
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="question-number" class="text-sm text-slate-500 mb-2"></div>
+            <div id="question" class="question-text"></div>
+            <div id="options" class="space-y-3"></div>
+            <div id="feedback" class="feedback hidden"></div>
+            <div class="mt-6 flex justify-between items-center">
+                <button id="submit-button" class="navigation-button">Submit Answer</button>
+                <button id="next-button" class="navigation-button hidden">Next Question</button>
+            </div>
+        </div>
+
+        <div id="score-container" class="score-container hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-slate-700">Quiz Completed!</h2>
+            <p class="score-text">Your Score: <span id="score">0</span> / <span id="total-questions">0</span></p>
+            <p id="score-message" class="text-lg mb-6 text-slate-600"></p>
+            <button id="restart-button" class="navigation-button restart-button">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        // Quiz questions data
+        const quizData = [
+            {
+                question: "What is the primary purpose of an analytical exposition text?",
+                options: [
+                    "To tell a story",
+                    "To describe a person, place, or thing",
+                    "To persuade the reader to accept a point of view",
+                    "To report factual information"
+                ],
+                answer: 2,
+                explanation: "The primary purpose of an analytical exposition is to convince or persuade the audience to accept a particular point of view on a certain issue or topic, supported by logical reasoning and evidence. (Analytical Exposition Material, Pg. 1)"
+            },
+            {
+                question: "Which of the following is NOT part of the generic structure of an analytical exposition?",
+                options: [
+                    "Thesis",
+                    "Arguments",
+                    "Reiteration",
+                    "Complication"
+                ],
+                answer: 3,
+                explanation: "The generic structure of an analytical exposition includes Thesis (position statement), Arguments (supporting arguments), and Reiteration (restatement). Complication is part of the structure of a narrative text. (Analytical Exposition Material, Pg. 1)"
+            },
+            {
+                question: "Which language feature uses modal verbs like 'must', 'should', 'may'?",
+                options: [
+                    "Causal Conjunctions",
+                    "Modality",
+                    "Emotive Language",
+                    "Formal Language"
+                ],
+                answer: 1,
+                explanation: "Modality refers to the use of modal verbs (e.g., must, should, may, might) to express certainty, necessity, or possibility. It helps to show the writer's attitude toward the argument. (Analytical Exposition Material, Pg. 2)"
+            },
+            {
+                question: "'Smartphones are addictive, *so* they often cause sleep deprivation.' The word 'so' in this sentence is an example of:",
+                options: [
+                    "Modality",
+                    "Emotive Language",
+                    "Causal Conjunction",
+                    "Rhetorical Question"
+                ],
+                answer: 2,
+                explanation: "Causal conjunctions like 'because', 'therefore', 'so', 'as a result', and 'due to' help explain the relationships between reasons and outcomes. (Analytical Exposition Material, Pg. 2)"
+            },
+            {
+                question: "In the example text 'Graffiti: Art or Vandalism?', what is the thesis statement?",
+                options: [
+                    "Graffiti is always art.",
+                    "Graffiti is always vandalism.",
+                    "Graffiti is often debated as either a form of art or vandalism.",
+                    "Graffiti should be banned."
+                ],
+                answer: 2,
+                explanation: "The text begins by stating that graffiti is often seen as both art and vandalism, which sets the stage for the discussion. (Analytical Exposition Material, Pg. 3)"
+            },
+            {
+                question: "What is the main purpose of a narrative text?",
+                options: [
+                    "To persuade the reader",
+                    "To entertain the reader and tell a story",
+                    "To provide instructions",
+                    "To analyze an issue"
+                ],
+                answer: 1,
+                explanation: "The main purpose of a narrative text is to entertain the reader by telling an interesting story, and often to convey a moral lesson through the story. (Narrative Text, Pg. 1)"
+            },
+            {
+                question: "Which part of a narrative text introduces the characters, setting, and basic background information?",
+                options: [
+                    "Complication",
+                    "Resolution",
+                    "Orientation",
+                    "Reiteration"
+                ],
+                answer: 2,
+                explanation: "Orientation is the introductory part where the characters, setting, and basic background information are presented. (Narrative Text, Pg. 1)"
+            },
+            {
+                question: "'The girl *walked* into the forest.' What tense does the verb 'walked' use, commonly found in narrative texts?",
+                options: [
+                    "Present Tense",
+                    "Past Tense",
+                    "Future Tense",
+                    "Present Perfect Tense"
+                ],
+                answer: 1,
+                explanation: "Narrative texts typically use the Past Tense to describe events that have already happened. (Narrative Text, Pg. 1)"
+            },
+            {
+                question: "Which of the following is an example of a time conjunction used in narrative texts?",
+                options: [
+                    "Beautiful",
+                    "Ran",
+                    "After",
+                    "'What do you want?'"
+                ],
+                answer: 2,
+                explanation: "Time conjunctions like 'then', 'after', 'soon', etc., are used to show the sequence of events in a story. (Narrative Text, Pg. 1)"
+            },
+            {
+                question: "'The Tortoise and the Hare' is an example of what type of narrative text?",
+                options: [
+                    "Fairy Tale",
+                    "Legend",
+                    "Myth",
+                    "Fable"
+                ],
+                answer: 3,
+                explanation: "Fables are short stories with animals as characters, meant to teach a moral lesson. (Narrative Text, Pg. 5)"
+            },
+            {
+                question: "In 'The Legend of Tangkuban Parahu', what task did Dayang Sumbi give to Sangkuriang?",
+                options: [
+                    "To find a magical flower",
+                    "To build a lake and a mountain in a single night",
+                    "To defeat a giant",
+                    "To marry a princess from another kingdom"
+                ],
+                answer: 1,
+                explanation: "Dayang Sumbi set a seemingly impossible task for Sangkuriang: to build a lake and a mountain in a single night. (Narrative Text, Pg. 6)"
+            },
+            {
+                question: "What is meant by 'Verb 2' in English grammar?",
+                options: [
+                    "The base form of a verb",
+                    "The past tense form of a verb",
+                    "The past participle form of a verb",
+                    "The present participle form of a verb"
+                ],
+                answer: 1,
+                explanation: "Verb 2 is the past tense form of a verb, used to state an event or action that happened in the past. (Narrative Text, Pg. 8)"
+            },
+            {
+                question: "Which of the following is an irregular verb?",
+                options: [
+                    "Walk - Walked",
+                    "Play - Played",
+                    "Go - Went",
+                    "Talk - Talked"
+                ],
+                answer: 2,
+                explanation: "Irregular verbs do not follow the standard pattern of adding '-ed' to form the past tense. For example, 'Go' becomes 'Went'. (Narrative Text, Pg. 8)"
+            },
+            {
+                question: "The expression 'In my opinion...' is used to:",
+                options: [
+                    "Support a point",
+                    "Introduce the thesis/position",
+                    "Add information",
+                    "Emphasize a point"
+                ],
+                answer: 1,
+                explanation: "The expression 'In my opinion...' is used to state the writer's personal viewpoint or perspective on a topic, which is part of introducing the thesis or position. (Analytical Exposition Material, Pg. 6, 10)"
+            },
+            {
+                question: "What is the function of 'Emotive Language' in an analytical exposition?",
+                options: [
+                    "To present facts objectively",
+                    "To evoke the reader's feelings and make the argument more compelling",
+                    "To show cause-effect relationships",
+                    "To ask questions without expecting an answer"
+                ],
+                answer: 1,
+                explanation: "While formal, emotive language can be used to evoke the reader's feelings and make the argument more compelling. Words such as 'dangerous', 'devastating', or 'critical' can enhance the urgency of the issue. (Analytical Exposition Material, Pg. 2)"
+            }
+        ];
+
+        // Variables to track quiz state
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOptionButton = null;
+
+        // DOM Elements
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const feedbackElement = document.getElementById('feedback');
+        const explanationElement = document.createElement('div'); // Create element for explanation
+        explanationElement.classList.add('explanation');
+        feedbackElement.appendChild(explanationElement); // Add to feedbackElement
+
+        const submitButton = document.getElementById('submit-button');
+        const nextButton = document.getElementById('next-button');
+        const progressBar = document.getElementById('progress-bar');
+        const questionNumberElement = document.getElementById('question-number');
+        
+        const quizContentElement = document.getElementById('quiz-content');
+        const scoreContainerElement = document.getElementById('score-container');
+        const scoreElement = document.getElementById('score');
+        const totalQuestionsElement = document.getElementById('total-questions');
+        const scoreMessageElement = document.getElementById('score-message');
+        const restartButton = document.getElementById('restart-button');
+
+        // Function to load or display a question
+        function loadQuestion() {
+            // Reset feedback and buttons
+            feedbackElement.classList.add('hidden');
+            feedbackElement.textContent = ''; // Clear feedback
+            explanationElement.textContent = ''; // Clear explanation
+            feedbackElement.appendChild(explanationElement); // Ensure explanation element is still there
+            
+            submitButton.classList.remove('hidden');
+            submitButton.disabled = true; // Disable until an option is selected
+            nextButton.classList.add('hidden');
+            optionsElement.innerHTML = ''; // Clear previous options
+            selectedOptionButton = null; // Reset selection
+
+            if (currentQuestionIndex < quizData.length) {
+                const currentQuestion = quizData[currentQuestionIndex];
+                questionElement.textContent = currentQuestion.question;
+                questionNumberElement.textContent = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+
+                // Create buttons for each answer option
+                currentQuestion.options.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-button');
+                    button.addEventListener('click', () => selectOption(button, index));
+                    optionsElement.appendChild(button);
+                });
+                updateProgressBar();
+            } else {
+                // Quiz finished
+                showScore();
+            }
+        }
+
+        // Function to handle option selection
+        function selectOption(button, index) {
+            if (selectedOptionButton) {
+                selectedOptionButton.classList.remove('selected');
+            }
+            selectedOptionButton = button;
+            selectedOptionButton.classList.add('selected');
+            submitButton.disabled = false; // Enable submit button
+            // Store the selected answer's index
+            selectedOptionButton.dataset.index = index;
+        }
+
+        // Function to check the answer
+        function checkAnswer() {
+            if (!selectedOptionButton) return; // Do nothing if no option is selected
+
+            const selectedAnswerIndex = parseInt(selectedOptionButton.dataset.index);
+            const correctAnswerIndex = quizData[currentQuestionIndex].answer;
+            const explanationText = quizData[currentQuestionIndex].explanation;
+
+            feedbackElement.classList.remove('hidden');
+            // Clear all children from feedbackElement before adding new ones
+            while (feedbackElement.firstChild) {
+                feedbackElement.removeChild(feedbackElement.firstChild);
+            }
+            
+            explanationElement.textContent = explanationText; // Set explanation text
+
+            if (selectedAnswerIndex === correctAnswerIndex) {
+                feedbackElement.classList.remove('incorrect');
+                feedbackElement.classList.add('correct');
+                const feedbackTextNode = document.createTextNode('Your answer is Correct! ');
+                feedbackElement.appendChild(feedbackTextNode);
+                score++;
+            } else {
+                feedbackElement.classList.remove('correct');
+                feedbackElement.classList.add('incorrect');
+                const feedbackTextNode = document.createTextNode('Your answer is Incorrect. ');
+                feedbackElement.appendChild(feedbackTextNode);
+            }
+            feedbackElement.appendChild(explanationElement); // Add explanation element
+
+            // Disable all option buttons after submitting
+            const optionButtons = optionsElement.querySelectorAll('.option-button');
+            optionButtons.forEach(button => {
+                button.disabled = true;
+                // Add styles for correct and incorrect answers
+                const buttonIndex = Array.from(optionButtons).indexOf(button);
+                if (buttonIndex === correctAnswerIndex) {
+                    button.classList.add('!bg-green-500', '!text-white', '!border-green-600');
+                } else if (button === selectedOptionButton && selectedAnswerIndex !== correctAnswerIndex) {
+                    button.classList.add('!bg-red-500', '!text-white', '!border-red-600');
+                }
+            });
+
+            submitButton.classList.add('hidden');
+            nextButton.classList.remove('hidden');
+        }
+        
+        // Function to update the progress bar
+        function updateProgressBar() {
+            const progressPercentage = ((currentQuestionIndex + 1) / quizData.length) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        // Function to display the final score
+        function showScore() {
+            quizContentElement.classList.add('hidden');
+            scoreContainerElement.classList.remove('hidden');
+            scoreElement.textContent = score;
+            totalQuestionsElement.textContent = quizData.length;
+
+            let message = "";
+            const percentage = (score / quizData.length) * 100;
+            if (percentage === 100) {
+                message = "Excellent! You've mastered all the material!";
+            } else if (percentage >= 80) {
+                message = "Very Good! Your understanding is solid.";
+            } else if (percentage >= 60) {
+                message = "Good! Keep improving your studies.";
+            } else if (percentage >= 40) {
+                message = "Fair. You can try again for a better result.";
+            } else {
+                message = "Don't give up! Review the material and try again.";
+            }
+            scoreMessageElement.textContent = message;
+        }
+        
+        // Function to restart the quiz
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            selectedOptionButton = null;
+            quizContentElement.classList.remove('hidden');
+            scoreContainerElement.classList.add('hidden');
+            nextButton.classList.add('hidden'); // Hide next button on restart
+            submitButton.classList.remove('hidden'); // Show submit button
+            loadQuestion();
+        }
+
+        // Event listeners for buttons
+        submitButton.addEventListener('click', checkAnswer);
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            loadQuestion();
+        });
+        restartButton.addEventListener('click', restartQuiz);
+
+        // Start the quiz when the page loads
+        loadQuestion();
+    </script>
+</body>
+</html>
